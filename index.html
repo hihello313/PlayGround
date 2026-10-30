@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#17152e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Skybound Tails — a hand-drawn side-scrolling platformer about small cats and very large birds." />
+  <title>Skybound Tails</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-state="menu">
+  <canvas id="game" aria-label="Skybound Tails game world"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <div id="ui" class="ui">
+    <header id="hud" class="hud is-hidden" aria-label="Game status">
+      <div class="hud-cluster hud-left">
+        <div class="level-pill">
+          <span class="level-kicker" id="levelKicker">LEVEL 1</span>
+          <strong id="levelName">Meadow Drift</strong>
+        </div>
+        <div id="hearts" class="hearts" aria-label="Five lives"></div>
+      </div>
+
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-glow" id="progressFill"></div>
+        <div class="progress-paw" id="progressPaw">
+          <svg viewBox="0 0 24 24"><ellipse cx="12" cy="15" rx="5.4" ry="4.4"/><ellipse cx="5.4" cy="9.2" rx="2.4" ry="3.1"/><ellipse cx="9.5" cy="6.1" rx="2.4" ry="3.2"/><ellipse cx="14.5" cy="6.1" rx="2.4" ry="3.2"/><ellipse cx="18.6" cy="9.2" rx="2.4" ry="3.1"/></svg>
+        </div>
+      </div>
+
+      <div class="hud-cluster hud-right">
+        <div class="fish-pill" aria-label="Fish collected">
+          <svg viewBox="0 0 32 24" aria-hidden="true"><path d="M2.6 12c4.5-6.4 11.1-8.6 17-5.4 2.1 1.1 3.8 2.8 5 5.4-1.2 2.6-2.9 4.3-5 5.4-5.9 3.2-12.5 1-17-5.4Z"/><path d="M24 12c2.2-2.8 4-3.8 6-3.6-.4 2.2-1.2 3.4-3.1 3.6 1.9.2 2.7 1.4 3.1 3.6-2 .2-3.8-.8-6-3.6Z" class="fish-tail"/><circle cx="10.2" cy="10" r="1.6" class="fish-eye"/></svg>
+          <span id="fishCount">0</span><small id="fishTotal">/ 12</small>
+        </div>
+        <button id="pauseBtn" class="icon-btn" aria-label="Pause game">
+          <svg viewBox="0 0 24 24"><rect x="6.5" y="4.5" width="4" height="15" rx="1.7"/><rect x="13.5" y="4.5" width="4" height="15" rx="1.7"/></svg>
+        </button>
+        <button id="muteBtn" class="icon-btn" aria-label="Mute sound">
+          <svg viewBox="0 0 24 24" class="sound-on"><path d="M4 9.5h3.6L12 6v12l-4.4-3.5H4Z"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18 6.8a7.4 7.4 0 0 1 0 10.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 24 24" class="sound-off"><path d="M4 9.5h3.6L12 6v12l-4.4-3.5H4Z"/><path d="m15.5 9 5 6M20.5 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div id="tiltBadge" class="tilt-badge is-hidden" aria-live="polite">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.6" width="10" height="18.8" rx="3"/><path d="M10 19.2h4" /></svg>
+      <span>Tilt to steer</span>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div id="levelBanner" class="level-banner" aria-live="polite">
+      <span id="bannerKicker">LEVEL 1</span>
+      <strong id="bannerName">Meadow Drift</strong>
+      <em id="bannerHint">Ride the birds. Chase the fish.</em>
+    </div>
+
+    <div id="controls" class="controls" aria-label="Touch controls">
+      <div class="move-pad">
+        <button class="control-btn move-btn" data-action="left" aria-label="Move left">
+          <svg viewBox="0 0 32 32"><path d="M18.7 6.8 9.2 16l9.5 9.2" fill="none" stroke="currentColor" stroke-width="4.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="control-btn move-btn" data-action="right" aria-label="Move right">
+          <svg viewBox="0 0 32 32"><path d="M13.3 6.8 22.8 16l-9.5 9.2" fill="none" stroke="currentColor" stroke-width="4.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="jump-cluster">
+        <button id="jumpBtn" class="control-btn jump-btn" data-action="jump" aria-label="Jump. Tap twice to double jump.">
+          <span class="jump-rings" aria-hidden="true"></span>
+          <svg viewBox="0 0 32 32"><path d="M16 25V8M9.5 14.5 16 8l6.5 6.5" fill="none" stroke="currentColor" stroke-width="4.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <small>JUMP</small>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main id="menu" class="overlay menu" aria-label="Main menu">
+    <section class="menu-copy">
+      <div class="eyebrow"><span class="eyebrow-dot"></span> A tiny cat. Very big birds.</div>
+      <h1 class="logo">
+        <span class="logo-sky">SKYBOUND</span>
+        <span class="logo-tails">TAILS</span>
+      </h1>
+      <p class="tagline">Leap across a drifting flock, gather lost fish, and find your way home before the stars come out.</p>
+
+      <div class="cat-picker" role="group" aria-label="Choose your cat">
+        <button class="cat-card is-selected" data-cat="mochi" aria-pressed="true">
+          <span class="cat-portrait"><canvas width="180" height="180" data-portrait="mochi"></canvas><span class="cat-halo"></span></span>
+          <span class="cat-name">Mochi</span>
+          <span class="cat-role">Balanced</span>
+        </button>
+        <button class="cat-card" data-cat="pepper" aria-pressed="false">
+          <span class="cat-portrait"><canvas width="180" height="180" data-portrait="pepper"></canvas><span class="cat-halo"></span></span>
+          <span class="cat-name">Pepper</span>
+          <span class="cat-role">Quickpaw</span>
+        </button>
+        <button class="cat-card" data-cat="marmalade" aria-pressed="false">
+          <span class="cat-portrait"><canvas width="180" height="180" data-portrait="marmalade"></canvas><span class="cat-halo"></span></span>
+          <span class="cat-name">Marmalade</span>
+          <span class="cat-role">Highflier</span>
+        </button>
+      </div>
+
+      <div class="menu-actions">
+        <button id="playBtn" class="primary-btn">
+          <span>Start the climb</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5 18.5 12 13 17.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="menu-options">
+          <button id="tiltBtnMenu" class="soft-btn" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.6" width="10" height="18.8" rx="3"/><path d="M10 19.2h4"/></svg>
+            <span>Tilt steering</span>
+            <i class="switch" aria-hidden="true"></i>
+          </button>
+          <button id="soundBtnMenu" class="soft-btn sound-btn" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.6L12 6v12l-4.4-3.5H4Z"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18 6.8a7.4 7.4 0 0 1 0 10.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>Sound</span>
+            <i class="switch" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="menu-meta">
+        <span><kbd>←</kbd><kbd>→</kbd> move</span>
+        <span><kbd>SPACE</kbd> jump</span>
+        <span id="bestTimeMeta">Best —:—</span>
+      </div>
+
+      <aside class="menu-note" aria-hidden="true">
+        <span class="note-line"></span>
+        <p>“The birds don’t mind.<br />They’re going that way anyway.”</p>
+        <span class="note-author">— field notes, page 3</span>
+      </aside>
+    </section>
+
+    <div class="menu-footer">
+      <span>Best enjoyed with headphones</span>
+      <span class="footer-birds" aria-hidden="true">
+        <svg viewBox="0 0 42 14"><path d="M1 8c4-5 8-5 12 0 4-5 8-5 12 0M27 10c3-3.8 6-3.8 9 0 3-3.8 6-3.8 9 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </span>
+      <span>3 trails · 36 fish</span>
+    </div>
+  </main>
+
+  <section id="pauseOverlay" class="overlay modal-layer is-hidden" aria-label="Paused">
+    <div class="modal pause-modal">
+      <span class="modal-kicker">Taking a breather</span>
+      <h2>Paused</h2>
+      <p class="modal-copy">The flock will wait. Cats are very good at waiting, when it suits them.</p>
+      <div class="pause-stats">
+        <div><strong id="pauseFish">0</strong><span>fish</span></div>
+        <div><strong id="pauseTime">0:00</strong><span>time</span></div>
+        <div><strong id="pauseLives">5</strong><span>lives</span></div>
+      </div>
+      <div class="modal-actions">
+        <button id="resumeBtn" class="primary-btn compact"><span>Keep climbing</span></button>
+        <button id="restartBtn" class="soft-btn wide">Restart trail</button>
+        <button id="pauseTiltBtn" class="soft-btn wide" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.6" width="10" height="18.8" rx="3"/><path d="M10 19.2h4"/></svg>
+          <span>Tilt steering</span><i class="switch" aria-hidden="true"></i>
+        </button>
+        <button id="quitBtn" class="text-btn">Back to the meadow</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="resultOverlay" class="overlay modal-layer is-hidden" aria-label="Level complete">
+    <div class="modal result-modal">
+      <div class="result-rays" aria-hidden="true"></div>
+      <span class="modal-kicker" id="resultKicker">Trail complete</span>
+      <h2 id="resultTitle">Meadow Drift</h2>
+      <div class="star-row" id="starRow" aria-label="Rating">
+        <svg viewBox="0 0 32 32" class="star"><path d="m16 3.8 3.7 7.5 8.3 1.2-6 5.9 1.4 8.2L16 22.7l-7.4 3.9 1.4-8.2-6-5.9 8.3-1.2Z"/></svg>
+        <svg viewBox="0 0 32 32" class="star"><path d="m16 3.8 3.7 7.5 8.3 1.2-6 5.9 1.4 8.2L16 22.7l-7.4 3.9 1.4-8.2-6-5.9 8.3-1.2Z"/></svg>
+        <svg viewBox="0 0 32 32" class="star"><path d="m16 3.8 3.7 7.5 8.3 1.2-6 5.9 1.4 8.2L16 22.7l-7.4 3.9 1.4-8.2-6-5.9 8.3-1.2Z"/></svg>
+      </div>
+      <p class="modal-copy" id="resultCopy">The flock is impressed. That is rare.</p>
+      <div class="result-stats">
+        <div><strong id="resultFish">0/12</strong><span>fish found</span></div>
+        <div><strong id="resultTime">0:00</strong><span>trail time</span></div>
+        <div><strong id="resultBest">—</strong><span>personal best</span></div>
+      </div>
+      <div class="modal-actions row">
+        <button id="nextBtn" class="primary-btn compact"><span>Next trail</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5 18.5 12 13 17.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button id="replayBtn" class="soft-btn">Replay</button>
+        <button id="menuBtn" class="text-btn">Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="gameoverOverlay" class="overlay modal-layer is-hidden" aria-label="Out of lives">
+    <div class="modal gameover-modal">
+      <span class="modal-kicker">The flock lost you</span>
+      <h2>Nine lives,<br /><em>not today.</em></h2>
+      <p class="modal-copy">Even the bravest cats take a wrong step. The birds are circling back for another try.</p>
+      <div class="modal-actions row">
+        <button id="retryBtn" class="primary-btn compact"><span>Try again</span></button>
+        <button id="gameoverMenuBtn" class="text-btn">Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="rotateHint" class="rotate-hint" aria-hidden="true">
+    <svg viewBox="0 0 40 40"><rect x="11" y="5" width="18" height="30" rx="4"/><path d="M4 16a16 16 0 0 1 4-6M36 24a16 16 0 0 1-4 6"/></svg>
+    <span>Landscape gives you more sky</span>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
